@@ -1,0 +1,13 @@
+{
+  "name": "stremio-subtitle-translator",
+  "version": "1.0.0",
+  "description": "Stremio addon to translate subtitles to Hebrew using OpenSubtitles and OpenAI",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
+  }
+}

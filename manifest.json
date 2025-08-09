@@ -1,0 +1,17 @@
+{
+  "id": "org.stremio.subtitle-translator",
+  "version": "1.0.0",
+  "name": "AI Subtitle Translator (Hebrew)",
+  "description": "Translates English subtitles to Hebrew using OpenSubtitles + ChatGPT",
+  "types": ["subtitles"],
+  "catalogs": [],
+  "resources": [
+    {
+      "name": "subtitles",
+      "types": ["movie", "series"],
+      "idPrefixes": ["tt"]
+    }
+  ],
+  "idPrefixes": ["tt"],
+  "logo": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Iconic_image_of_translation.png"
+}
