@@ -5,7 +5,7 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 const OS_API_KEY = process.env.OPENSUBTITLES_API_KEY;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 app.get('/', (req, res) => {
   res.send('✅ Stremio Subtitle Translator is running');
@@ -20,7 +20,11 @@ app.get('/subtitles/:imdbId', async (req, res) => {
   try {
     const imdbId = req.params.imdbId;
 
-    // 1. קבלת כתוביות מאופן סאב
+    if (!GEMINI_API_KEY) {
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not set' });
+    }
+
+    // 1. Fetch English subtitles from OpenSubtitles
     const subsResponse = await fetch(`https://api.opensubtitles.com/api/v1/subtitles?imdb_id=${imdbId}&languages=en`, {
       headers: {
         'Api-Key': OS_API_KEY,
@@ -36,28 +40,51 @@ app.get('/subtitles/:imdbId', async (req, res) => {
     const fileRes = await fetch(fileUrl);
     const englishSubs = await fileRes.text();
 
-    // 2. שליחה ל־ChatGPT לתרגום
-    const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    // 2. Send to Gemini for Hindi translation
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${GEMINI_API_KEY}`;
+    
+    const aiResponse = await fetch(geminiUrl, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: 'You are a subtitle translator. Translate all text from English to Hebrew while keeping subtitle format unchanged.' },
-          { role: 'user', content: englishSubs }
+        system_instruction: {
+          parts: [
+            {
+              text: 'You are a professional subtitle translator. Translate all dialogue text from English to Hindi in natural Devanagari script. Strictly preserve all original subtitle formatting, line numbers, and timestamp structures (00:00:00,000 --> 00:00:00,000). Do NOT add markdown code block wrappers (such as ``` or ```srt), conversational intros, or explanations.'
+            }
+          ]
+        },
+        contents: [
+          {
+            parts: [
+              { text: englishSubs }
+            ]
+          }
         ]
       })
     });
 
     const aiData = await aiResponse.json();
-    const hebrewSubs = aiData.choices[0].message.content;
 
-    // 3. החזרת הכתוביות ל־Stremio
+    if (aiData.error) {
+      console.error('Gemini API Error:', aiData.error);
+      return res.status(500).json({ error: aiData.error.message || 'Gemini error' });
+    }
+
+    let hindiSubs = aiData.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!hindiSubs) {
+      return res.status(500).json({ error: 'Failed to generate Hindi subtitles' });
+    }
+
+    // Strip markdown code fences if the model wraps the output in ```srt ... ```
+    hindiSubs = hindiSubs.replace(/^```(?:srt)?\r?\n/i, '').replace(/\r?\n```$/i, '').trim();
+
+    // 3. Return the Hindi subtitles to the player
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.send(hebrewSubs);
+    res.send(hindiSubs);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Something went wrong' });
