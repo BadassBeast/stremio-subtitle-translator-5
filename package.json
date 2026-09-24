@@ -1,7 +1,7 @@
 {
   "name": "stremio-subtitle-translator",
   "version": "1.0.0",
-  "description": "Stremio addon to translate subtitles to Hebrew using OpenSubtitles and OpenAI",
+  "description": "Stremio addon to translate subtitles to Hindi using OpenSubtitles and OpenAI",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
