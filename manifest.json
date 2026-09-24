@@ -2,7 +2,7 @@
   "id": "org.stremio.subtitle-translator",
   "version": "1.0.0",
   "name": "AI Subtitle Translator (Hebrew)",
-  "description": "Translates English subtitles to Hebrew using OpenSubtitles + ChatGPT",
+  "description": "Translates English subtitles to Hindi using OpenSubtitles + ChatGPT",
   "types": ["subtitles"],
   "catalogs": [],
   "resources": [
